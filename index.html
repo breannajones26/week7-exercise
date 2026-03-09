@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Dance Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-text">
+        <h1>The Dance Tracker</h1>
+        <p class="tagline">Log your classes, track your progress, grow as a dancer</p>
+      </div>
+      <button id="addClassBtn" class="btn btn-primary">+ Add Class</button>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="classes">Classes</button>
+      <button class="tab" data-tab="instructors">Instructors</button>
+      <button class="tab" data-tab="styles">Styles</button>
+    </nav>
+
+    <main class="content">
+      <!-- Classes Tab -->
+      <section id="classes-tab" class="tab-content active">
+        <div id="classList" class="class-list">
+          <!-- Classes will be rendered here -->
+        </div>
+        <div id="emptyState" class="empty-state">
+          <p>Welcome to The Dance Tracker!</p>
+          <p>Click "+ Add Class" to log your first class.</p>
+        </div>
+      </section>
+
+      <!-- Instructors Tab -->
+      <section id="instructors-tab" class="tab-content">
+        <div id="instructorList" class="instructor-list">
+          <!-- Instructors will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Styles Tab -->
+      <section id="styles-tab" class="tab-content">
+        <div id="styleList" class="style-list">
+          <!-- Styles will be rendered here -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Add/Edit Class Modal -->
+    <div id="classModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add Class</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <form id="classForm">
+          <div class="form-group">
+            <label for="classDate">Date</label>
+            <input type="date" id="classDate" required>
+          </div>
+          <div class="form-group">
+            <label for="classStyle">Style</label>
+            <select id="classStyle" required>
+              <!-- Options populated by JS -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="classInstructor">Instructor</label>
+            <input type="text" id="classInstructor" placeholder="Instructor name" required>
+          </div>
+          <div class="form-group">
+            <label for="classStudio">Studio (optional)</label>
+            <input type="text" id="classStudio" placeholder="Studio or location">
+          </div>
+          <div class="form-group">
+            <label for="classDuration">Duration (minutes)</label>
+            <input type="number" id="classDuration" placeholder="60" min="1">
+          </div>
+          <div class="form-group">
+            <label for="classDifficulty">Difficulty Level</label>
+            <select id="classDifficulty">
+              <option value="">Select level</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+              <option value="All Levels">All Levels</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="classNotes">Notes</label>
+            <textarea id="classNotes" rows="4" placeholder="What did you work on? How did it feel?"></textarea>
+          </div>
+          <input type="hidden" id="classId">
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Class</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
