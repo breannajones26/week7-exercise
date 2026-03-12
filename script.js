@@ -16,8 +16,13 @@ const CURRENT_USER_KEY = 'dct_current_user';
  * @returns {Array} Array of user objects
  */
 function getUsers() {
-  const data = localStorage.getItem(USERS_KEY);
-  return data ? JSON.parse(data) : [];
+  try {
+    const data = localStorage.getItem(USERS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error('Error reading users:', e);
+    return [];
+  }
 }
 
 /**
@@ -25,7 +30,12 @@ function getUsers() {
  * @param {Array} users - Array of user objects
  */
 function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.error('Error saving users:', e);
+    alert('Unable to save. Storage may be full.');
+  }
 }
 
 /**
@@ -33,8 +43,13 @@ function saveUsers(users) {
  * @returns {Object|null} Current user or null if not logged in
  */
 function getCurrentUser() {
-  const data = localStorage.getItem(CURRENT_USER_KEY);
-  return data ? JSON.parse(data) : null;
+  try {
+    const data = localStorage.getItem(CURRENT_USER_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    console.error('Error reading current user:', e);
+    return null;
+  }
 }
 
 /**
@@ -143,32 +158,64 @@ const DEFAULT_STYLES = [
  * @returns {string} Unique identifier
  */
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - User input text
+ * @returns {string} Escaped safe text
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Get the storage key for classes (user-specific)
+ * @returns {string} Storage key for current user's classes
+ */
+function getClassesKey() {
+  const user = getCurrentUser();
+  return user ? `dct_classes_${user.id}` : STORAGE_KEY;
 }
 
 /**
  * Get all classes from localStorage
- * Data is stored as a JSON array
+ * Data is stored as a JSON array (user-specific)
  * @returns {Array} Array of class objects
  */
 function getClasses() {
-  const data = localStorage.getItem(STORAGE_KEY);
+  const key = getClassesKey();
+  const data = localStorage.getItem(key);
   if (!data) {
     return [];
   }
   // Parse JSON array from localStorage
-  const classes = JSON.parse(data);
-  // Sort by date, newest first
-  return classes.sort((a, b) => new Date(b.date) - new Date(a.date));
+  try {
+    const classes = JSON.parse(data);
+    // Sort by date, newest first
+    return classes.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } catch (e) {
+    console.error('Error parsing classes data:', e);
+    return [];
+  }
 }
 
 /**
  * Save all classes to localStorage
- * Data is stored as a JSON array
+ * Data is stored as a JSON array (user-specific)
  * @param {Array} classes - Array of class objects
  */
 function saveClasses(classes) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(classes));
+  const key = getClassesKey();
+  try {
+    localStorage.setItem(key, JSON.stringify(classes));
+  } catch (e) {
+    console.error('Error saving classes:', e);
+    alert('Unable to save. Storage may be full.');
+  }
 }
 
 // ==========================================
@@ -277,9 +324,11 @@ function getStyles() {
 // UI Rendering Functions
 // ==========================================
 
-// Format date for display
+// Format date for display (handles timezone correctly)
 function formatDate(dateString) {
-  const date = new Date(dateString);
+  // Parse as local date to avoid timezone issues
+  const [year, month, day] = dateString.split('-');
+  const date = new Date(year, month - 1, day);
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -303,14 +352,14 @@ function renderClasses() {
   emptyState.style.display = 'none';
 
   classList.innerHTML = classes.map(c => `
-    <div class="class-card" data-id="${c.id}">
+    <div class="class-card" data-id="${escapeHtml(c.id)}">
       <div class="class-card-header">
         <span class="class-date">${formatDate(c.date)}</span>
-        <span class="class-style">${c.className}</span>
+        <span class="class-style">${escapeHtml(c.className)}</span>
       </div>
-      <div class="class-instructor">${c.instructor}</div>
-      ${c.location ? `<div class="class-location">${c.location}</div>` : ''}
-      ${c.notes ? `<div class="class-notes">${c.notes}</div>` : ''}
+      <div class="class-instructor">${escapeHtml(c.instructor)}</div>
+      ${c.location ? `<div class="class-location">${escapeHtml(c.location)}</div>` : ''}
+      ${c.notes ? `<div class="class-notes">${escapeHtml(c.notes)}</div>` : ''}
       <div class="class-actions">
         <button class="btn btn-secondary btn-small edit-btn">Edit</button>
         <button class="btn btn-danger btn-small delete-btn">Delete</button>
@@ -352,8 +401,8 @@ function renderInstructors() {
   instructorList.innerHTML = instructors.map(i => `
     <div class="instructor-card">
       <div>
-        <div class="instructor-name">${i.name}</div>
-        <div class="instructor-styles">${i.classNames.join(', ')}</div>
+        <div class="instructor-name">${escapeHtml(i.name)}</div>
+        <div class="instructor-styles">${i.classNames.map(name => escapeHtml(name)).join(', ')}</div>
       </div>
       <div class="instructor-count">${i.count} class${i.count === 1 ? '' : 'es'}</div>
     </div>
@@ -488,6 +537,17 @@ function setupAuthListeners() {
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
 
+    // Validate inputs
+    if (!username) {
+      document.getElementById('loginError').textContent = 'Please enter a username';
+      return;
+    }
+
+    if (!password) {
+      document.getElementById('loginError').textContent = 'Please enter a password';
+      return;
+    }
+
     const result = login(username, password);
 
     if (result.success) {
@@ -504,6 +564,12 @@ function setupAuthListeners() {
     const username = document.getElementById('signupUsername').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirm = document.getElementById('signupConfirm').value;
+
+    // Validate username
+    if (!username || username.length < 2) {
+      document.getElementById('signupError').textContent = 'Username must be at least 2 characters';
+      return;
+    }
 
     // Validate passwords match
     if (password !== confirm) {
@@ -562,6 +628,17 @@ function setupEventListeners() {
       location: document.getElementById('classLocation').value.trim(),
       notes: document.getElementById('classNotes').value.trim()
     };
+
+    // Validate required fields after trim
+    if (!classData.instructor) {
+      alert('Instructor name is required');
+      return;
+    }
+
+    if (!classData.className) {
+      alert('Please select a class type');
+      return;
+    }
 
     const existingId = document.getElementById('classId').value;
 
