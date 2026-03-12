@@ -9,6 +9,7 @@ node_modules/
 # IDE/Editor files
 .vscode/
 .idea/
+.cursor/
 *.sublime-project
 *.sublime-workspace
 
