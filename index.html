@@ -74,12 +74,41 @@
     <main class="content">
       <!-- Classes Tab -->
       <section id="classes-tab" class="tab-content active">
+        <!-- Filter and Sort Controls -->
+        <div id="filterControls" class="filter-controls">
+          <div class="filter-group">
+            <label for="filterStyle">Filter by Style:</label>
+            <select id="filterStyle">
+              <option value="">All Styles</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterInstructor">Filter by Instructor:</label>
+            <select id="filterInstructor">
+              <option value="">All Instructors</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="sortOrder">Sort by:</label>
+            <select id="sortOrder">
+              <option value="date-desc">Date (Newest First)</option>
+              <option value="date-asc">Date (Oldest First)</option>
+              <option value="style-asc">Style (A-Z)</option>
+              <option value="instructor-asc">Instructor (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
         <div id="classList" class="class-list">
           <!-- Classes will be rendered here -->
         </div>
         <div id="emptyState" class="empty-state">
           <p>Welcome to The Dance Tracker!</p>
           <p>Click "+ Add Class" to log your first class.</p>
+        </div>
+        <div id="noResultsState" class="empty-state" style="display: none;">
+          <p>No classes match your filters.</p>
+          <p>Try adjusting your filter criteria.</p>
         </div>
       </section>
 

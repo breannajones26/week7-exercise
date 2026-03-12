@@ -224,6 +224,45 @@ body {
   display: block;
 }
 
+/* Filter Controls */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.filter-group select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  background: var(--background);
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
 /* Class Cards */
 .class-list {
   display: flex;
@@ -458,6 +497,20 @@ form {
 
 /* Responsive - Mobile */
 @media (max-width: 480px) {
+  /* Filter Controls */
+  .filter-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-group {
+    min-width: 100%;
+  }
+
+  .filter-group select {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
   /* Auth Screen */
   .auth-container {
     padding: 1.5rem;

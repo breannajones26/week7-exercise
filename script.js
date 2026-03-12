@@ -321,14 +321,128 @@ function getStyles() {
 }
 
 // ==========================================
+// Filter and Sort State
+// ==========================================
+
+let currentFilters = {
+  style: '',
+  instructor: ''
+};
+
+let currentSort = 'date-desc';
+
+/**
+ * Get filtered and sorted classes
+ * @returns {Array} Filtered and sorted array of classes
+ */
+function getFilteredClasses() {
+  let classes = getClasses();
+
+  // Apply style filter
+  if (currentFilters.style) {
+    classes = classes.filter(c => c.className === currentFilters.style);
+  }
+
+  // Apply instructor filter
+  if (currentFilters.instructor) {
+    classes = classes.filter(c => c.instructor === currentFilters.instructor);
+  }
+
+  // Apply sorting
+  classes.sort((a, b) => {
+    switch (currentSort) {
+      case 'date-desc':
+        return new Date(b.date) - new Date(a.date);
+      case 'date-asc':
+        return new Date(a.date) - new Date(b.date);
+      case 'style-asc':
+        return a.className.localeCompare(b.className);
+      case 'instructor-asc':
+        return a.instructor.localeCompare(b.instructor);
+      default:
+        return new Date(b.date) - new Date(a.date);
+    }
+  });
+
+  return classes;
+}
+
+/**
+ * Populate filter dropdowns with available options
+ */
+function populateFilterDropdowns() {
+  const classes = getClasses();
+  const filterStyle = document.getElementById('filterStyle');
+  const filterInstructor = document.getElementById('filterInstructor');
+
+  // Get unique styles
+  const styles = [...new Set(classes.map(c => c.className))].sort();
+
+  // Get unique instructors
+  const instructors = [...new Set(classes.map(c => c.instructor))].sort();
+
+  // Populate style dropdown
+  filterStyle.innerHTML = '<option value="">All Styles</option>' +
+    styles.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+  // Populate instructor dropdown
+  filterInstructor.innerHTML = '<option value="">All Instructors</option>' +
+    instructors.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+
+  // Restore current filter values
+  filterStyle.value = currentFilters.style;
+  filterInstructor.value = currentFilters.instructor;
+}
+
+/**
+ * Setup filter and sort event listeners
+ */
+function setupFilterListeners() {
+  const filterStyle = document.getElementById('filterStyle');
+  const filterInstructor = document.getElementById('filterInstructor');
+  const sortOrder = document.getElementById('sortOrder');
+
+  filterStyle.addEventListener('change', (e) => {
+    currentFilters.style = e.target.value;
+    renderClasses();
+  });
+
+  filterInstructor.addEventListener('change', (e) => {
+    currentFilters.instructor = e.target.value;
+    renderClasses();
+  });
+
+  sortOrder.addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    renderClasses();
+  });
+}
+
+// ==========================================
 // UI Rendering Functions
 // ==========================================
 
 // Format date for display (handles timezone correctly)
 function formatDate(dateString) {
+  // Handle null/undefined/empty date
+  if (!dateString || typeof dateString !== 'string') {
+    return 'No date';
+  }
+
   // Parse as local date to avoid timezone issues
-  const [year, month, day] = dateString.split('-');
+  const parts = dateString.split('-');
+  if (parts.length !== 3) {
+    return 'Invalid date';
+  }
+
+  const [year, month, day] = parts;
   const date = new Date(year, month - 1, day);
+
+  // Check for invalid date
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -338,20 +452,41 @@ function formatDate(dateString) {
 
 // Render the class list
 function renderClasses() {
-  const classes = getClasses();
+  const allClasses = getClasses();
+  const filteredClasses = getFilteredClasses();
   const classList = document.getElementById('classList');
   const emptyState = document.getElementById('emptyState');
+  const noResultsState = document.getElementById('noResultsState');
+  const filterControls = document.getElementById('filterControls');
 
-  if (classes.length === 0) {
+  // Update filter dropdowns
+  populateFilterDropdowns();
+
+  // No classes at all
+  if (allClasses.length === 0) {
     classList.style.display = 'none';
     emptyState.style.display = 'block';
+    noResultsState.style.display = 'none';
+    filterControls.style.display = 'none';
+    return;
+  }
+
+  // Show filter controls when there are classes
+  filterControls.style.display = 'flex';
+
+  // No results after filtering
+  if (filteredClasses.length === 0) {
+    classList.style.display = 'none';
+    emptyState.style.display = 'none';
+    noResultsState.style.display = 'block';
     return;
   }
 
   classList.style.display = 'flex';
   emptyState.style.display = 'none';
+  noResultsState.style.display = 'none';
 
-  classList.innerHTML = classes.map(c => `
+  classList.innerHTML = filteredClasses.map(c => `
     <div class="class-card" data-id="${escapeHtml(c.id)}">
       <div class="class-card-header">
         <span class="class-date">${formatDate(c.date)}</span>
@@ -367,10 +502,13 @@ function renderClasses() {
     </div>
   `).join('');
 
-  // Add event listeners
+  // Add event listeners with double-click protection
   classList.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const card = e.target.closest('.class-card');
+      const button = e.target;
+      if (button.disabled) return;
+
+      const card = button.closest('.class-card');
       const id = card.dataset.id;
       openEditModal(id);
     });
@@ -378,11 +516,21 @@ function renderClasses() {
 
   classList.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const card = e.target.closest('.class-card');
+      const button = e.target;
+      if (button.disabled) return;
+
+      // Disable button to prevent double-click
+      button.disabled = true;
+
+      const card = button.closest('.class-card');
       const id = card.dataset.id;
+
       if (confirm('Delete this class?')) {
         deleteClass(id);
         renderClasses();
+      } else {
+        // Re-enable if user cancels
+        button.disabled = false;
       }
     });
   });
@@ -432,9 +580,14 @@ function populateStyleDropdown() {
 // Modal Functions
 // ==========================================
 
-const modal = document.getElementById('classModal');
-const form = document.getElementById('classForm');
-const modalTitle = document.getElementById('modalTitle');
+// Modal elements (initialized after DOM ready)
+let modal, form, modalTitle;
+
+function initModalElements() {
+  modal = document.getElementById('classModal');
+  form = document.getElementById('classForm');
+  modalTitle = document.getElementById('modalTitle');
+}
 
 // Open modal for adding new class
 function openAddModal() {
@@ -630,8 +783,8 @@ function setupEventListeners() {
     };
 
     // Validate required fields after trim
-    if (!classData.instructor) {
-      alert('Instructor name is required');
+    if (!classData.date) {
+      alert('Please select a date');
       return;
     }
 
@@ -640,10 +793,21 @@ function setupEventListeners() {
       return;
     }
 
+    if (!classData.instructor) {
+      alert('Instructor name is required');
+      return;
+    }
+
     const existingId = document.getElementById('classId').value;
 
     if (existingId) {
-      updateClass(existingId, classData);
+      const updated = updateClass(existingId, classData);
+      if (!updated) {
+        alert('This class no longer exists. It may have been deleted.');
+        closeModal();
+        renderClasses();
+        return;
+      }
     } else {
       addClass(classData);
     }
@@ -665,8 +829,10 @@ function setupEventListeners() {
 // ==========================================
 
 function init() {
+  initModalElements();
   setupAuthListeners();
   setupTabs();
+  setupFilterListeners();
   setupEventListeners();
   checkAuthState();
 }
