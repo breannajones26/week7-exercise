@@ -145,8 +145,115 @@ function saveClasses(classes) {
 
 ---
 
+## Filtering & Sorting
+
+### Filter Options
+| Filter | Description |
+|--------|-------------|
+| **By Style** | Dropdown populated with styles from user's classes |
+| **By Instructor** | Dropdown populated with instructors from user's classes |
+| **Clear Filters** | Button appears when filters are active |
+
+### Sort Options
+| Option | Description |
+|--------|-------------|
+| Date (Newest First) | Default sort order |
+| Date (Oldest First) | Chronological order |
+| Style (A-Z) | Alphabetical by class type |
+| Instructor (A-Z) | Alphabetical by instructor name |
+
+### Filter Functions
+```javascript
+getFilteredClasses()      // Returns filtered + sorted classes
+populateFilterDropdowns() // Updates filter options dynamically
+clearFilters()            // Resets all filters to default
+hasActiveFilters()        // Checks if any filters are active
+```
+
+---
+
+## Edge Cases Handled
+
+### User Action Testing
+| Action | Edge Case | Fix Applied |
+|--------|-----------|-------------|
+| **Add Class** | Empty date field | JS validation added |
+| **Edit Class** | Class deleted before save | Error message shown |
+| **Delete Class** | Double-click on button | Button disabled during operation |
+| **Filter** | Filtered value deleted | Auto-clears invalid filters |
+| **Date Display** | null/undefined date | Returns "No date" instead of crashing |
+
+### formatDate Null Safety
+```javascript
+function formatDate(dateString) {
+  // Handle null/undefined/empty date
+  if (!dateString || typeof dateString !== 'string') {
+    return 'No date';
+  }
+  // ... rest of function
+}
+```
+
+### Modal Initialization
+```javascript
+// Modal elements initialized after DOM ready (not at module level)
+let modal, form, modalTitle;
+
+function initModalElements() {
+  modal = document.getElementById('classModal');
+  form = document.getElementById('classForm');
+  modalTitle = document.getElementById('modalTitle');
+}
+```
+
+---
+
+## Production Reliability Improvements
+
+### Input Validation
+| Field | Max Length | Validation |
+|-------|------------|------------|
+| Instructor | 100 chars | Required, trimmed |
+| Location | 200 chars | Optional, trimmed |
+| Notes | 1000 chars | Optional, trimmed |
+| Username | - | Min 2 characters |
+| Password | - | Min 4 characters |
+
+### Data Safety
+```javascript
+// Array type verification when parsing localStorage
+const classes = JSON.parse(data);
+if (!Array.isArray(classes)) {
+  console.error('Classes data is not an array');
+  return [];
+}
+
+// escapeHtml handles null/undefined
+function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return '';
+  }
+  // ... rest of function
+}
+```
+
+### Accessibility (WCAG)
+| Element | Attribute Added |
+|---------|-----------------|
+| Buttons | `aria-label` |
+| Required inputs | `aria-required="true"` |
+| Modal | `role="dialog"`, `aria-modal="true"` |
+| Filter dropdowns | `aria-label` |
+
+### Auto-Reset Features
+- Filters reset on logout (prevents stale data for next user)
+- Invalid filters auto-clear after deleting classes
+- Filter dropdowns rebuild on each render
+
+---
+
 ## Tech Stack
-- **HTML5** - Semantic markup
+- **HTML5** - Semantic markup with ARIA accessibility
 - **CSS3** - Variables, Flexbox, responsive design
 - **Vanilla JavaScript** - No frameworks
 - **localStorage** - Client-side data persistence
