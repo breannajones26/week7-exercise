@@ -90,6 +90,61 @@ checkAuthState()            // Update UI based on auth
 
 ---
 
+## Code Review & Bug Fixes
+
+### Issues Identified & Fixed
+
+| Issue | Severity | Fix Applied |
+|-------|----------|-------------|
+| **XSS Vulnerability** | Critical | Added `escapeHtml()` function to sanitize all user input before rendering |
+| **Shared Classes Across Users** | Critical | Made storage user-specific with `getClassesKey()` function |
+| **Timezone Date Bug** | Medium | Fixed date parsing to use local time instead of UTC |
+| **Deprecated `substr()`** | Medium | Replaced with `substring()` |
+| **No localStorage Error Handling** | Medium | Added try/catch blocks to all localStorage operations |
+| **Empty Instructor Validation** | Minor | Added validation after trim in form submission |
+| **Username Validation** | Minor | Added minimum 2 character requirement on signup |
+| **Login Validation** | Minor | Added checks for empty username/password fields |
+
+### Security Functions Added
+```javascript
+// Prevents XSS attacks by escaping HTML characters
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Returns user-specific storage key for class data
+function getClassesKey() {
+  const user = getCurrentUser();
+  return user ? `dct_classes_${user.id}` : STORAGE_KEY;
+}
+```
+
+### Date Timezone Fix
+```javascript
+// Before (buggy - could show wrong date in some timezones)
+const date = new Date(dateString);
+
+// After (fixed - parses as local date)
+const [year, month, day] = dateString.split('-');
+const date = new Date(year, month - 1, day);
+```
+
+### Error Handling Pattern
+```javascript
+function saveClasses(classes) {
+  try {
+    localStorage.setItem(key, JSON.stringify(classes));
+  } catch (e) {
+    console.error('Error saving classes:', e);
+    alert('Unable to save. Storage may be full.');
+  }
+}
+```
+
+---
+
 ## Tech Stack
 - **HTML5** - Semantic markup
 - **CSS3** - Variables, Flexbox, responsive design
