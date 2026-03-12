@@ -106,15 +106,11 @@ dance-class-tracker/
 ```javascript
 {
   id: "uuid-string",           // Unique identifier
-  date: "2026-03-09",          // ISO date string
-  style: "Contemporary",       // Dance style name
+  className: "Contemporary",   // Dance style/class name
   instructor: "Maria Santos",  // Instructor name
-  difficulty: "Intermediate",  // Beginner | Intermediate | Advanced | All Levels
-  studio: "Downtown Dance",    // Optional: studio/location
-  duration: 60,                // Optional: class length in minutes
-  notes: "Worked on turns...", // Personal notes
-  createdAt: 1741536000000,    // Timestamp when entry was created
-  updatedAt: 1741536000000     // Timestamp when last modified
+  date: "2026-03-09",          // ISO date string
+  location: "Downtown Dance",  // Studio/location
+  notes: "Worked on turns..."  // Personal notes
 }
 ```
 
@@ -137,11 +133,18 @@ dance-class-tracker/
 }
 ```
 
-### localStorage Keys
+### localStorage Key
 ```
-dct_classes     → Array of class entries
-dct_instructors → Array of instructors
-dct_styles      → Array of dance styles
+dct_classes → JSON array of class entries
+```
+
+### Data Persistence Helper Functions
+```javascript
+// Get all classes from localStorage (returns JSON array)
+getClasses()
+
+// Save all classes to localStorage (stores as JSON array)
+saveClasses(classes)
 ```
 
 ---
