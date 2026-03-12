@@ -60,8 +60,8 @@
           <p class="tagline">Welcome, <span id="usernameDisplay"></span>!</p>
         </div>
         <div class="header-actions">
-          <button id="addClassBtn" class="btn btn-primary">+ Add Class</button>
-          <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+          <button id="addClassBtn" class="btn btn-primary" aria-label="Add a new class">+ Add Class</button>
+          <button id="logoutBtn" class="btn btn-secondary" aria-label="Log out of your account">Logout</button>
         </div>
       </header>
 
@@ -78,25 +78,26 @@
         <div id="filterControls" class="filter-controls">
           <div class="filter-group">
             <label for="filterStyle">Filter by Style:</label>
-            <select id="filterStyle">
+            <select id="filterStyle" aria-label="Filter classes by style">
               <option value="">All Styles</option>
             </select>
           </div>
           <div class="filter-group">
             <label for="filterInstructor">Filter by Instructor:</label>
-            <select id="filterInstructor">
+            <select id="filterInstructor" aria-label="Filter classes by instructor">
               <option value="">All Instructors</option>
             </select>
           </div>
           <div class="filter-group">
             <label for="sortOrder">Sort by:</label>
-            <select id="sortOrder">
+            <select id="sortOrder" aria-label="Sort classes">
               <option value="date-desc">Date (Newest First)</option>
               <option value="date-asc">Date (Oldest First)</option>
               <option value="style-asc">Style (A-Z)</option>
               <option value="instructor-asc">Instructor (A-Z)</option>
             </select>
           </div>
+          <button id="clearFiltersBtn" class="btn btn-secondary btn-small" style="display: none;" aria-label="Clear all filters">Clear Filters</button>
         </div>
 
         <div id="classList" class="class-list">
@@ -130,11 +131,11 @@
     </div><!-- end mainApp -->
 
     <!-- Add/Edit Class Modal -->
-    <div id="classModal" class="modal">
+    <div id="classModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
       <div class="modal-content">
         <div class="modal-header">
           <h2 id="modalTitle">Add Class</h2>
-          <button class="close-btn">&times;</button>
+          <button class="close-btn" aria-label="Close modal">&times;</button>
         </div>
         <form id="classForm">
           <div class="form-group">
@@ -145,19 +146,19 @@
           </div>
           <div class="form-group">
             <label for="classInstructor">Instructor</label>
-            <input type="text" id="classInstructor" placeholder="Instructor name" required>
+            <input type="text" id="classInstructor" placeholder="Instructor name" required maxlength="100" aria-required="true">
           </div>
           <div class="form-group">
             <label for="classDate">Date</label>
-            <input type="date" id="classDate" required>
+            <input type="date" id="classDate" required aria-required="true">
           </div>
           <div class="form-group">
             <label for="classLocation">Location</label>
-            <input type="text" id="classLocation" placeholder="Studio or location">
+            <input type="text" id="classLocation" placeholder="Studio or location" maxlength="200">
           </div>
           <div class="form-group">
             <label for="classNotes">Notes</label>
-            <textarea id="classNotes" rows="4" placeholder="What did you work on? How did it feel?"></textarea>
+            <textarea id="classNotes" rows="4" placeholder="What did you work on? How did it feel?" maxlength="1000"></textarea>
           </div>
           <input type="hidden" id="classId">
           <div class="form-actions">

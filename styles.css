@@ -263,6 +263,11 @@ body {
   border-color: var(--primary);
 }
 
+#clearFiltersBtn {
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
 /* Class Cards */
 .class-list {
   display: flex;

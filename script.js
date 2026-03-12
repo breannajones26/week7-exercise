@@ -109,6 +109,9 @@ function login(username, password) {
  */
 function logout() {
   localStorage.removeItem(CURRENT_USER_KEY);
+  // Reset filters to prevent stale data for next user
+  currentFilters = { style: '', instructor: '' };
+  currentSort = 'date-desc';
 }
 
 /**
@@ -167,8 +170,11 @@ function generateId() {
  * @returns {string} Escaped safe text
  */
 function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return '';
+  }
   const div = document.createElement('div');
-  div.textContent = text;
+  div.textContent = String(text);
   return div.innerHTML;
 }
 
@@ -195,6 +201,11 @@ function getClasses() {
   // Parse JSON array from localStorage
   try {
     const classes = JSON.parse(data);
+    // Verify it's an array
+    if (!Array.isArray(classes)) {
+      console.error('Classes data is not an array');
+      return [];
+    }
     // Sort by date, newest first
     return classes.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) {
@@ -381,17 +392,54 @@ function populateFilterDropdowns() {
   // Get unique instructors
   const instructors = [...new Set(classes.map(c => c.instructor))].sort();
 
-  // Populate style dropdown
-  filterStyle.innerHTML = '<option value="">All Styles</option>' +
-    styles.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  // Populate style dropdown (use escapeHtml for display, but keep raw value for matching)
+  filterStyle.innerHTML = '<option value="">All Styles</option>';
+  styles.forEach(s => {
+    const option = document.createElement('option');
+    option.value = s;
+    option.textContent = s;
+    filterStyle.appendChild(option);
+  });
 
   // Populate instructor dropdown
-  filterInstructor.innerHTML = '<option value="">All Instructors</option>' +
-    instructors.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+  filterInstructor.innerHTML = '<option value="">All Instructors</option>';
+  instructors.forEach(i => {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = i;
+    filterInstructor.appendChild(option);
+  });
 
   // Restore current filter values
   filterStyle.value = currentFilters.style;
   filterInstructor.value = currentFilters.instructor;
+}
+
+/**
+ * Check if any filters are active
+ * @returns {boolean} True if filters are active
+ */
+function hasActiveFilters() {
+  return currentFilters.style !== '' || currentFilters.instructor !== '';
+}
+
+/**
+ * Update clear filters button visibility
+ */
+function updateClearFiltersButton() {
+  const clearBtn = document.getElementById('clearFiltersBtn');
+  clearBtn.style.display = hasActiveFilters() ? 'block' : 'none';
+}
+
+/**
+ * Clear all filters and reset to defaults
+ */
+function clearFilters() {
+  currentFilters = { style: '', instructor: '' };
+  document.getElementById('filterStyle').value = '';
+  document.getElementById('filterInstructor').value = '';
+  updateClearFiltersButton();
+  renderClasses();
 }
 
 /**
@@ -401,14 +449,17 @@ function setupFilterListeners() {
   const filterStyle = document.getElementById('filterStyle');
   const filterInstructor = document.getElementById('filterInstructor');
   const sortOrder = document.getElementById('sortOrder');
+  const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
   filterStyle.addEventListener('change', (e) => {
     currentFilters.style = e.target.value;
+    updateClearFiltersButton();
     renderClasses();
   });
 
   filterInstructor.addEventListener('change', (e) => {
     currentFilters.instructor = e.target.value;
+    updateClearFiltersButton();
     renderClasses();
   });
 
@@ -416,6 +467,8 @@ function setupFilterListeners() {
     currentSort = e.target.value;
     renderClasses();
   });
+
+  clearFiltersBtn.addEventListener('click', clearFilters);
 }
 
 // ==========================================
@@ -453,14 +506,27 @@ function formatDate(dateString) {
 // Render the class list
 function renderClasses() {
   const allClasses = getClasses();
-  const filteredClasses = getFilteredClasses();
   const classList = document.getElementById('classList');
   const emptyState = document.getElementById('emptyState');
   const noResultsState = document.getElementById('noResultsState');
   const filterControls = document.getElementById('filterControls');
 
+  // Auto-clear invalid filters (e.g., after deleting the only class with that style)
+  const validStyles = [...new Set(allClasses.map(c => c.className))];
+  const validInstructors = [...new Set(allClasses.map(c => c.instructor))];
+
+  if (currentFilters.style && !validStyles.includes(currentFilters.style)) {
+    currentFilters.style = '';
+  }
+  if (currentFilters.instructor && !validInstructors.includes(currentFilters.instructor)) {
+    currentFilters.instructor = '';
+  }
+
   // Update filter dropdowns
   populateFilterDropdowns();
+  updateClearFiltersButton();
+
+  const filteredClasses = getFilteredClasses();
 
   // No classes at all
   if (allClasses.length === 0) {
@@ -795,6 +861,22 @@ function setupEventListeners() {
 
     if (!classData.instructor) {
       alert('Instructor name is required');
+      return;
+    }
+
+    // Validate max lengths to prevent storage issues
+    if (classData.instructor.length > 100) {
+      alert('Instructor name is too long (max 100 characters)');
+      return;
+    }
+
+    if (classData.location.length > 200) {
+      alert('Location is too long (max 200 characters)');
+      return;
+    }
+
+    if (classData.notes.length > 1000) {
+      alert('Notes are too long (max 1000 characters)');
       return;
     }
 
